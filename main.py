@@ -1,30 +1,29 @@
-from flask import Flask
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+from flask import Flask, request, jsonify
+from flask_basicauth import BasicAuth
+import pickle
 
-df = pd.read_csv("https://raw.githubusercontent.com/alura-cursos/1576-mlops-machine-learning/aula-5/casas.csv")
+colunas = ['tamanho', 'ano', 'garagem']
 
-df = df[['tamanho', 'preco']]
-
-x = df.drop('preco', axis=1)
-y = df['preco']
-
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
-
-model = LinearRegression()
-model.fit(x_train, y_train)
+with open('model.sav', 'rb') as f:
+    model = pickle.load(f)
 
 app = Flask(__name__)
+app.config['BASIC_AUTH_USERNAME'] = 'gabriel'
+app.config['BASIC_AUTH_PASSWORD'] = 'nichio'
+
+basic_auth = BasicAuth(app)
 
 @app.route('/')
 def home():
     return 'Minha primeira API.'
 
-@app.route('/cotacao/<int:tamanho>')
-def cotacao(tamanho):
-    preco = model.predict([[tamanho]])
-    return str(preco)
+@app.route('/cotacao/', methods=['POST'])
+@basic_auth.required
+def cotacao():
+    dados = request.get_json()
+    dados_input = [dados[col] for col in colunas]
+    preco = model.predict([dados_input])
+    return jsonify(preco=preco[0])
 
 
-app.run()
+app.run(debug=True)
