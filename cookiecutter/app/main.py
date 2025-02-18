@@ -1,15 +1,16 @@
 from flask import Flask, request, jsonify
 from flask_basicauth import BasicAuth
 import pickle
+import os
 
 colunas = ['tamanho', 'ano', 'garagem']
 
-with open('model.sav', 'rb') as f:
+with open('../models/model.sav', 'rb') as f:
     model = pickle.load(f)
 
 app = Flask(__name__)
-app.config['BASIC_AUTH_USERNAME'] = 'gabriel'
-app.config['BASIC_AUTH_PASSWORD'] = 'nichio'
+app.config['BASIC_AUTH_USERNAME'] = os.environ.get('BASIC_AUTH_USERNAME')
+app.config['BASIC_AUTH_PASSWORD'] = os.environ.get('BASIC_AUTH_PASSWORD')
 
 basic_auth = BasicAuth(app)
 
@@ -26,4 +27,4 @@ def cotacao():
     return jsonify(preco=preco[0])
 
 
-app.run(debug=True)
+app.run(debug=True, host='0.0.0.0')
